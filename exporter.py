@@ -2,6 +2,8 @@
 
 from bs4 import BeautifulSoup
 from jikanpy import Jikan
+import time
+import re
 
 with open("nautilist.html", "r") as f:
     list_html = f.read()
@@ -12,22 +14,37 @@ animes = list_soup.find_all(class_ = 'elt')
 count = 0
 jikan = Jikan()
 
-naut_type = {
-    "Série TV": "TV",
-    "OAV": "OVA",
-
+nau_types = {
+    "Série TV": "tv",
+    "OAV": "ova",
+    "ONA": "ona",
+    "Film": "movie",
+    "Spécial": "special"
 }
 
 for anime in animes:
     count += 1
     
-    title = anime.find(class_ = 't_titre')
-    title = title.find_all('a')
-    title = title[0].contents[0]
-    print(str(count) + " - " + title)
+    # Nautilist
+    nau_title = anime.find(class_ = 't_titre')
+    nau_title = nau_title.find_all('a')
+    nau_title = nau_title[0].contents[0]
     
-    search = jikan.search('anime', title, parameters={'limit':'1'})
-    mal_id = search["results"][0]["mal_id"]
-    mal_title = search["results"][0]["title"]
-    print(str(mal_id) + " - " + mal_title)
+    nau_type = anime.find(class_ = 't_type')
+    nau_type = nau_type.find(class_ = 'format')
+    nau_type = nau_type.contents[0]
+    
+    # My anime list
+    search = jikan.search('anime', nau_title, parameters={'limit': '1', 'type': nau_types[nau_type]})
+
+    if search["results"]:
+        mal_id = search["results"][0]["mal_id"]
+        mal_title = search["results"][0]["title"]
+        mal_type = search["results"][0]["type"]
+    
+        if nau_title.lower() != mal_title.lower():
+            print(str(count) + " - " + nau_title + " - " + nau_type, end = '')
+            print(" --> MAL: " + str(mal_id) + " - " + mal_title + " - " + mal_type)
+
+    time.sleep(0.3)
     
