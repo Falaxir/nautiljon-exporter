@@ -1,6 +1,6 @@
 # Nautiljon Exporter
 
-Nauliljon animes list exporter to MAL XML format.
+Nauliljon animes list exporter to MAL XML format. \
 Nautiljon ==> Anilist.
 
 ## How to run
