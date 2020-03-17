@@ -1,2 +1,3 @@
 beautifulsoup4
 jikanpy
+progressbar2
