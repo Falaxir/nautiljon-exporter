@@ -8,20 +8,20 @@ import time
 from bs4 import BeautifulSoup
 from jikanpy import Jikan
 
+username = "dranixx"
+status_list = ['vu', 'a-voir']
+
 def main():
-    username = "dranixx"
     status = 0
-    status_list = ['vu', 'a-voir']
+    data = []
+    data = get_animes(status, data)
+    status = 1
+    data = get_animes(status, data)
+    convert_to_xml(data)
+
+def get_animes(status, data):
     url = ("https://www.nautiljon.com/membre/"
             f"{status_list[status]},{username},anime.html")
-    
-    data = []
-    data = get_animes(status, url, data)
-    status = 1
-    data = get_animes(status, url, data)
-
-
-def get_animes(status, url, data):
     page = requests.get(url)    
     list_soup = BeautifulSoup(page.text, 'html.parser')
     animes = list_soup.find_all(class_ = 'elt')
@@ -36,6 +36,7 @@ def get_animes(status, url, data):
             "Spécial": "special"
             }
     len_animes = len(animes)
+    f = open("mismatch.log", 'a+')
 
     for anime in animes:
         count += 1
@@ -49,9 +50,20 @@ def get_animes(status, url, data):
         nau_type = nau_type.find(class_ = 'format')
         nau_type = nau_type.contents[0]
 
-        nau_ep = anime.find(class_ = 'ep_prog')
-
-        nau_status = anime.find(class_ = 't_status')
+        if status: # 1 
+            nau_status = 'P'  # Plan to Watch
+            nau_ep = '0'
+            nau_score = '0'
+        else:      # 0
+            nau_status = 'C'  # Completed
+            
+            nau_ep = anime.find(class_ = 't_progression')
+            nau_ep = nau_ep.contents[0]
+            nau_ep = nau_ep.split(' /')[0] 
+            
+            nau_score = anime.find(class_ = 't_note')
+            nau_score = nau_score.find(class_ = 'note_val')
+            nau_score = nau_score.contents[0]
 
         # Search of MAL ID
         search = jikan.search('anime', nau_title, \
@@ -66,15 +78,15 @@ def get_animes(status, url, data):
             mal_str = re.sub("[\s:-]", "", mal_title.lower())
 
             if nau_str != mal_str or nau_types[nau_type] != mal_type.lower():
-                print(str(count) + " - " + nau_title + " - " + nau_type, end = '')
-                print(" ==> MAL: " + str(mal_id) + " - " + mal_title + " - " + mal_type)
+                f.write(str(count) + " - " + nau_title + " - " + nau_type)
+                f.write(" ==> MAL: " + str(mal_id) + " - " + mal_title + " - " + mal_type + '\n')
+        
+        data.append({"title": nau_title, "id": mal_id, "status": nau_status, 
+            "progress": nau_ep, "score": nau_score})
 
-        data.append({"title": nau_title, "id": mal_id, "status": nau_status})
-
-        #if count % 2 == 0:
-            # 2 requests / second
-            # 30 requests / minute
-        time.sleep(1.5)
+        # 2 requests / second
+        # 30 requests / minute
+        time.sleep(2)
         progress(count, len_animes, "Process animes list")
 
     print('✔︎ Successfully exported!')
@@ -95,37 +107,24 @@ def progress(count, total, status=''):
 def convert_to_xml(data):
     output = ''''''
     user_total_anime = 0
-    user_total_watching = 0
     user_total_completed = 0
-    user_total_onhold = 0
-    user_total_dropped = 0
     user_total_plantowatch = 0
 
     for item in data:
         s = item['status']
-        if s == "PLANNING":
-            s = "Plan to Watch"
-            user_total_plantowatch += 1
-        elif s == "DROPPED":
-            s = "Dropped"
-            user_total_dropped += 1
-        elif s == "CURRENT":
-            s = "Watching"
-            user_total_watching += 1
-        elif s == "PAUSED":
-            s = "On-Hold"
-            user_total_onhold += 1
-        elif "completed" in s.lower():
+        if s == 'C':
             s = "Completed"
             user_total_completed += 1
+        elif s == 'P':
+            s = "Plan to Watch"
+            user_total_plantowatch += 1
 
         anime_item = ''
         anime_item += '    <anime>\n'
-        anime_item += '        <series_animedb_id>' + str(item['idMal']) + '</series_animedb_id>\n'
-        anime_item += '        <series_title><![CDATA[' + item['title'] + ']]></series_title>'
-        anime_item += '        <series_episodes>' + str(item['episodes']) + '</series_episodes>\n'
-        anime_item += '        <my_watched_episodes>' + str(item['progress']) + '</my_watched_episodes>\n'
-        anime_item += '        <my_score>' + str(item['score']) + '</my_score>\n'
+        anime_item += '        <series_animedb_id>' + str(item['id']) + '</series_animedb_id>\n'
+        anime_item += '        <series_title><![CDATA[' + item['title'] + ']]></series_title>\n'
+        anime_item += '        <my_watched_episodes>' + item['progress'] + '</my_watched_episodes>\n'
+        anime_item += '        <my_score>' + item['score'] + '</my_score>\n'
         anime_item += '        <my_status>' + s + '</my_status>\n'
         anime_item += '    </anime>\n'
 
@@ -143,18 +142,24 @@ def convert_to_xml(data):
 
 <myanimelist>
     <myinfo>
-        <user_id>123456</user_id>
-        <user_name>''' + variables['username'] + '''</user_name>
+        <user_id></user_id>
+        <user_name>''' + username + '''</user_name>
         <user_export_type>1</user_export_type>
         <user_total_anime>''' + str(user_total_anime) + '''</user_total_anime>
-        <user_total_watching>''' + str(user_total_watching) + '''</user_total_watching>
+        <user_total_watching>0</user_total_watching>
         <user_total_completed>''' + str(user_total_completed) + '''</user_total_completed>
-        <user_total_onhold>''' + str(user_total_onhold) + '''</user_total_onhold>
-        <user_total_dropped>''' + str(user_total_dropped) + '''</user_total_dropped>
+        <user_total_onhold>0</user_total_onhold>
+        <user_total_dropped>0</user_total_dropped>
         <user_total_plantowatch>''' + str(user_total_plantowatch) + '''</user_total_plantowatch>
     </myinfo>
 '''
     output = output_start + output + '</myanimelist>'
+    
+    f = open("nautilist.xml", 'w')
+    f.write(output)
+    f.close()
+    
+    print('✔︎ Successfully converted!')
 
 
 
