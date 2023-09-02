@@ -16,9 +16,7 @@ $ desactivate
 ```
 
 ## How to run
-For now only "Terminé" (Completed) anime works.
-
-Make sure your Nautiljon list is public, you can do that on your preferences.
+Make sure your Nautiljon list is public, you can do that on your preferences ("Nauti'liste" and "bloc-notes").
 Go to the file `exporter.py` and edit at the begining:
 - username
  - The username of the list to export, you can find that when going to your Nautiljon list at the address bar.

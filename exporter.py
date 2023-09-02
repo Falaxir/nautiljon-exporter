@@ -47,6 +47,7 @@ def get_animes(status, data, scraper):
             "Film": "movie",
             "Spécial": "special",
             "Court-métrage": "movie",
+            "Inconnu": "tv",
             }
     len_animes = len(animes)
     f = open("mismatch.log", 'a+')
