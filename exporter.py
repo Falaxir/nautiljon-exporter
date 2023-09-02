@@ -4,25 +4,37 @@ import re
 import requests
 import sys
 import time
+import cloudscraper
 
 from bs4 import BeautifulSoup
 from jikanpy import Jikan
 
-username = "dranixx"
+# ================================
+# Please change the values below, help in the README file
+# ================================
+
+username = "CHANGE_YOUR_USERNAME"
 status_list = ['vu', 'a-voir']
+update_all_entries = True
+
+# ================================
 
 def main():
+    if username == "CHANGE_YOUR_USERNAME":
+        print("Please go to the file `exporter.py` and update the values according to the README file")
+        exit(84)
+    scraper = cloudscraper.create_scraper()
     status = 0
     data = []
-    data = get_animes(status, data)
+    data = get_animes(status, data, scraper)
     status = 1
-    data = get_animes(status, data)
+    data = get_animes(status, data, scraper)
     convert_to_xml(data)
 
-def get_animes(status, data):
+def get_animes(status, data, scraper):
     url = ("https://www.nautiljon.com/membre/"
             f"{status_list[status]},{username},anime.html")
-    page = requests.get(url)    
+    page = scraper.get(url)
     list_soup = BeautifulSoup(page.text, 'html.parser')
     animes = list_soup.find_all(class_ = 'elt')
 
@@ -33,7 +45,8 @@ def get_animes(status, data):
             "OAV": "ova",
             "ONA": "ona",
             "Film": "movie",
-            "Spécial": "special"
+            "Spécial": "special",
+            "Court-métrage": "movie",
             }
     len_animes = len(animes)
     f = open("mismatch.log", 'a+')
@@ -58,8 +71,9 @@ def get_animes(status, data):
             nau_status = 'C'  # Completed
             
             nau_ep = anime.find(class_ = 't_progression')
-            nau_ep = nau_ep.contents[0]
-            nau_ep = nau_ep.split(' /')[0] 
+            nau_ep = nau_ep.contents[1]
+
+            nau_ep = nau_ep.split(' /')[1] 
             
             nau_score = anime.find(class_ = 't_note')
             nau_score = nau_score.find(class_ = 'note_val')
@@ -69,10 +83,10 @@ def get_animes(status, data):
         search = jikan.search('anime', nau_title, \
                 parameters={'limit': '1', 'type': nau_types[nau_type]})
 
-        if search["results"]:
-            mal_id = search["results"][0]["mal_id"]
-            mal_title = search["results"][0]["title"]
-            mal_type = search["results"][0]["type"]
+        if search["data"]:
+            mal_id = search["data"][0]["mal_id"]
+            mal_title = search["data"][0]["title"]
+            mal_type = search["data"][0]["type"]
 
             nau_str = re.sub("[\s:-]", "", nau_title.lower())
             mal_str = re.sub("[\s:-]", "", mal_title.lower())
@@ -126,6 +140,7 @@ def convert_to_xml(data):
         anime_item += '        <my_watched_episodes>' + item['progress'] + '</my_watched_episodes>\n'
         anime_item += '        <my_score>' + item['score'] + '</my_score>\n'
         anime_item += '        <my_status>' + s + '</my_status>\n'
+        anime_item += '        <update_on_import>1</update_on_import>\n' if update_all_entries else '        <update_on_import>0</update_on_import>\n'
         anime_item += '    </anime>\n'
 
         output += anime_item
