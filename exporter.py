@@ -19,17 +19,47 @@ update_all_entries = True
 
 # ================================
 
+#TODO: Rewrite some parts of the code to make it more clear
 def main():
     if username == "CHANGE_YOUR_USERNAME":
-        print("Please go to the file `exporter.py` and update the values according to the README file")
+        print("❌ Please go to the file `exporter.py` and update the values according to the README file")
         exit(84)
     scraper = cloudscraper.create_scraper()
-    status = 0
     data = []
-    data = get_animes(status, data, scraper)
-    status = 1
-    data = get_animes(status, data, scraper)
+    if 'vu' in status_list:
+        status = 0
+        data = get_animes(status, data, scraper)
+    if 'a-voir' in status_list:
+        status = 1
+        data = get_animes(status, data, scraper)
     convert_to_xml(data)
+
+def get_anime_status(current_status, list_soup):
+    anime_status = list_soup.find_all('h2')
+    rslt_status = {
+        "names": [],
+        "number": [],
+        "sums": []
+    }
+    if current_status: # if 1, so in "planned to watch", dont do it
+        return rslt_status
+
+    mal_status = {
+        "En cours": "Watching",
+        "Terminé": "Completed",
+        "En pause": "On-Hold",
+        "Abandonné": "Dropped"
+    }
+
+    sum = 0
+
+    for stat in anime_status:
+        stat_match = re.match(r"^(.*?)\s*\((.*)\)$", stat.text)
+        rslt_status['names'].append(mal_status[stat_match.group(1)])
+        rslt_status['number'].append(int(stat_match.group(2)))
+        sum += int(stat_match.group(2))
+        rslt_status['sums'].append(sum)
+    return rslt_status
 
 def get_animes(status, data, scraper):
     url = ("https://www.nautiljon.com/membre/"
@@ -37,6 +67,8 @@ def get_animes(status, data, scraper):
     page = scraper.get(url)
     list_soup = BeautifulSoup(page.text, 'html.parser')
     animes = list_soup.find_all(class_ = 'elt')
+    animes_status = get_anime_status(status, list_soup)
+    print(animes_status)
 
     count = 0
     jikan = Jikan()
@@ -52,6 +84,11 @@ def get_animes(status, data, scraper):
     len_animes = len(animes)
     f = open("mismatch.log", 'a+')
 
+    current_status = "Completed"
+    current_status_index = 0
+    if len(animes_status["names"]) > 1:
+        current_status = animes_status["names"][current_status_index]
+
     for anime in animes:
         count += 1
 
@@ -64,13 +101,19 @@ def get_animes(status, data, scraper):
         nau_type = nau_type.find(class_ = 'format')
         nau_type = nau_type.contents[0]
 
-        # TODO: Support "Abandonné" (Dropped), "En pause" (On Hold)
         if status: # 1 
             nau_status = 'P'  # Plan to Watch
             nau_ep = '0'
             nau_score = '0'
         else:      # 0
-            nau_status = 'C'  # Completed
+            
+            # Check wich status the anime on the list is
+            if current_status_index < len(animes_status["names"]) - 1:
+                if int(animes_status["sums"][current_status_index]) < count:
+                    current_status_index += 1
+                    current_status = animes_status["names"][current_status_index]
+            
+            nau_status = current_status
             
             nau_ep = anime.find(class_ = 't_progression')
             nau_ep = nau_ep.contents[1]
@@ -124,13 +167,21 @@ def convert_to_xml(data):
     output = ''''''
     user_total_anime = 0
     user_total_completed = 0
+    user_total_onhold = 0
+    user_total_dropped = 0
+    user_total_watching = 0
     user_total_plantowatch = 0
 
     for item in data:
         s = item['status']
-        if s == 'C':
-            s = "Completed"
+        if s == 'Completed':
             user_total_completed += 1
+        if s == 'Watching':
+            user_total_watching += 1
+        if s == 'On-Hold':
+            user_total_onhold += 1
+        if s == 'Dropped':
+            user_total_dropped += 1
         elif s == 'P':
             s = "Plan to Watch"
             user_total_plantowatch += 1
@@ -163,10 +214,10 @@ def convert_to_xml(data):
         <user_name>''' + username + '''</user_name>
         <user_export_type>1</user_export_type>
         <user_total_anime>''' + str(user_total_anime) + '''</user_total_anime>
-        <user_total_watching>0</user_total_watching>
+        <user_total_watching>''' + str(user_total_watching) + '''</user_total_watching>
         <user_total_completed>''' + str(user_total_completed) + '''</user_total_completed>
-        <user_total_onhold>0</user_total_onhold>
-        <user_total_dropped>0</user_total_dropped>
+        <user_total_onhold>''' + str(user_total_onhold) + '''</user_total_onhold>
+        <user_total_dropped>''' + str(user_total_dropped) + '''</user_total_dropped>
         <user_total_plantowatch>''' + str(user_total_plantowatch) + '''</user_total_plantowatch>
     </myinfo>
 '''

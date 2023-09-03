@@ -41,8 +41,17 @@ Now your list should be imported.\
 ## Export to other websites
 You might want to use [animeManga-autoBackup](https://github.com/Animanga-Initiative/animeManga-autoBackup)
 
-## Limitations
-For now, status such as "Abandonné" (Dropped), "En pause" (On Hold) is not yet supported, they will be imported as "En cours" (Currently Watching)
+## Limitations and Supported sections
+- Nauti'liste Anime
+    - ✅ Status ("En cours", "Terminé", "En pause", "Abandonné")
+    - ✅ Score given
+    - ✅ Episodes watched
+    - ❌ Number of rewatch
+- Bloc-notes
+    - ✅ Planned to watch
+- Others
+    - ❌ Favourites
+    - ❌ Custom lists
 
 ## Note on Nautiljon request accessibility 
 Nautiljon uses cloudflare security to avoid scraping. This script only get two time the nautiljon list of the profile when running. For now, [cloudscraper](https://github.com/VeNoMouS/cloudscraper) is used but keep in mind it will need to be updated in the future.
