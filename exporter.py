@@ -68,7 +68,6 @@ def get_animes(status, data, scraper):
     list_soup = BeautifulSoup(page.text, 'html.parser')
     animes = list_soup.find_all(class_ = 'elt')
     animes_status = get_anime_status(status, list_soup)
-    print(animes_status)
 
     count = 0
     jikan = Jikan()
