@@ -26,6 +26,7 @@ Go to the file `exporter.py` and edit at the begining:
     - You can keep as it is, it is a list of category to save on the xml format.
 - update_all_entries
     - When set to `True` (recommanded), it will replace all your existing matching data on your existing MAL list.
+
 Now you can run the command in your virtual env:
 ```shell
 $ python3 exporter.py
@@ -36,7 +37,7 @@ Process might take a while depending on the size of your list. It took ~17m on a
 Go to the [myanimelist.net import page](https://myanimelist.net/import.php) \
 Select myanimelist import, and pick the `nautilist.xml` file. \
 Now your list should be imported.\
-> **NOTE**: Sometimes, you might need to import it at least two times in order to sucessfully import all the list. Especially if you have lot of data to import.
+> **NOTE**: Make sure to compare the entries, it might be possible due to name duplicates (ex: upcoming seasons that dont have a distinctive name yet) that i marked the wrong season. So check and compare your entries after importing, especially the plan to watch.
 
 ## Export to other websites
 You might want to use [animeManga-autoBackup](https://github.com/Animanga-Initiative/animeManga-autoBackup) after you exported your Nautiljon list. \
