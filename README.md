@@ -35,7 +35,8 @@ Process might take a while depending on the size of your list.
 ## How to import to myanimelist.net
 Go to the [myanimelist.net import page](https://myanimelist.net/import.php) \
 Select myanimelist import, and pick the `nautilist.xml` file. \
-Now your list should be imported
+Now your list should be imported.
+**NOTE**: Sometimes, you might need to import it at least two times in order to sucessfully import all the list. Especially if you have shows that are not finished.
 
 ## Export to other websites
 You might want to use [animeManga-autoBackup](https://github.com/Animanga-Initiative/animeManga-autoBackup)

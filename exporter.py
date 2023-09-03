@@ -64,6 +64,7 @@ def get_animes(status, data, scraper):
         nau_type = nau_type.find(class_ = 'format')
         nau_type = nau_type.contents[0]
 
+        # TODO: Support "Abandonné" (Dropped), "En pause" (On Hold)
         if status: # 1 
             nau_status = 'P'  # Plan to Watch
             nau_ep = '0'
@@ -74,7 +75,7 @@ def get_animes(status, data, scraper):
             nau_ep = anime.find(class_ = 't_progression')
             nau_ep = nau_ep.contents[1]
 
-            nau_ep = nau_ep.split(' /')[0] 
+            nau_ep = nau_ep.split(' /')[0].strip()
             
             nau_score = anime.find(class_ = 't_note')
             nau_score = nau_score.find(class_ = 'note_val')
